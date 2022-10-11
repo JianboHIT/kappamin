@@ -235,9 +235,16 @@ def _savedat_to_file(filename, datas, keys=None,
         else:
             isSingle = False
     if header.lower().startswith('auto'):
-        props = ', '.join(keys)
-        units = ', '.join([UNITS[key] for key in keys])
-        header = '\n'.join([props, units])
+        props = []
+        units = []
+        for prop in keys:
+            unit = UNITS[prop]
+            Nmax = max(map(len, [prop, unit]))
+            props.append(prop.rjust(Nmax))
+            units.append(unit.rjust(Nmax))
+        propsline = ', '.join(props)
+        unitsline = ', '.join(units)
+        header = '\n'.join([propsline, unitsline])
     
     # access output datas
     out = [datas[key] for key in keys]
