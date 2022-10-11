@@ -28,9 +28,9 @@ def kernel(x):
                   where=(np.absolute(q)>1E-4))
     return v
 
-def Cahill(vT, vL, Natom, Vcell, T):
+def Debye(vT, vL, Natom, Vcell, T):
     '''
-    Calculate Cahill-Debye minimum limit to thermal conductivity
+    Calculate Debye-Cahill minimum limit to thermal conductivity
     '''
     
     # define constants for matching common units
@@ -91,7 +91,7 @@ def BvK(vt, vl, natom, vcell, T):
     else:
         pass
 
-def BvK_Pei(vt, vl, natom, vcell, T):
+def Pei(vt, vl, natom, vcell, T):
     raise NotImplementedError
 
 def fileparser(filename, ktypes=None):
@@ -114,7 +114,7 @@ def fileparser(filename, ktypes=None):
 
 if __name__ == '__main__':
     # access filename of config
-    ktypes = ['Cahill', 'BvK', 'BvK-Pei']
+    ktypes = ['Debye', 'BvK', 'Pei']
     if len(sys.argv) > 1:
         filename = sys.argv[1]
     else:
@@ -129,15 +129,15 @@ if __name__ == '__main__':
     config = fileparser(filename, ktypes)
     
     # parser config file
-    if 'Cahill' in config.sections():
+    if 'Debye' in config.sections():
         keys = ['vT', 'vL', 'Natom', 'Vcell', 'T']
         paras = dict()
         for key in keys:
-            paras[key] = config.getfloat('Cahill', key)
-        Kmin = Cahill(**paras)
+            paras[key] = config.getfloat('Debye', key)
+        Kmin = Debye(**paras)
         if Kmin.ndim == 0:
             Kmin = np.array([Kmin])
-        fileout = 'Kappamin_Cahill.dat'
+        fileout = 'Kappamin_Debye.dat'
         np.savetxt(fileout, Kmin, fmt='%.6f')
     elif 'BvK' in config.sections():
         keys = ['vT', 'vL', 'Natom', 'Vcell', 'T']
@@ -149,15 +149,15 @@ if __name__ == '__main__':
             Kmin = np.array([Kmin])
         fileout = 'Kappamin_BvK.dat'
         np.savetxt(fileout, Kmin, fmt='%.6f')
-    elif 'BvK-Pei' in config.sections():
+    elif 'Pei' in config.sections():
         keys = ['vT', 'vL', 'Natom', 'Vcell', 'T']
         paras = dict()
         for key in keys:
-            paras[key] = config.getfloat('BvK-Pei', key)
-        Kmin = BvK_Pei(**paras)
+            paras[key] = config.getfloat('Pei', key)
+        Kmin = Pei(**paras)
         if Kmin.ndim == 0:
             Kmin = np.array([Kmin])
-        fileout = 'Kappamin_BvK-Pei.dat'
+        fileout = 'Kappamin_Pei.dat'
         np.savetxt(fileout, Kmin, fmt='%.6f')
     else:
         raise ValueError('Unknown method.(Valid: %s)', ', '.join(ktypes))
