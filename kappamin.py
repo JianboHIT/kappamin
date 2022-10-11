@@ -39,6 +39,12 @@ def _core_bvk(x):
                   where=(np.absolute(q)>1E-4))
     return v
 
+def _quad_t(func, Tr):
+    def itg(Trx):
+        return quad(func, 0, 1, args=(Trx,))[0]
+    itg_v = np.vectorize(itg)
+    return itg_v(Tr)
+
 def Debye(vT, vL, Natom, Vcell, T):
     '''
     Calculate Debye-Cahill minimum limit to thermal conductivity
@@ -78,10 +84,10 @@ def Debye(vT, vL, Natom, Vcell, T):
         out['T_a_L'] = TaL
     else:
         T = np.array(T)
-        CrT = quad(f_cv, 0, 1, args=(TaT/T,))[0]
-        CrL = quad(f_cv, 0, 1, args=(TaL/T,))[0]
-        KMrT = quad(f_km, 0, 1, args=(TaT/T,))[0]
-        KMrL = quad(f_km, 0, 1, args=(TaL/T,))[0]
+        CrT = _quad_t(f_cv, TaT/T)
+        CrL = _quad_t(f_cv, TaL/T)
+        KMrT = _quad_t(f_km, TaT/T)
+        KMrL = _quad_t(f_km, TaL/T)
         TMrT = KMrT/CrT
         TMrL = KMrL/CrL
         out['T'] = T
@@ -135,10 +141,10 @@ def BvK(vT, vL, Natom, Vcell, T):
         out['T_a_L'] = TaL
     else:
         T = np.array(T)
-        CrT = quad(f_cv, 0, 1, args=(TaT/T,))[0]
-        CrL = quad(f_cv, 0, 1, args=(TaL/T,))[0]
-        KMrT = quad(f_km, 0, 1, args=(TaT/T,))[0]
-        KMrL = quad(f_km, 0, 1, args=(TaL/T,))[0]
+        CrT = _quad_t(f_cv, TaT/T)
+        CrL = _quad_t(f_cv, TaL/T)
+        KMrT = _quad_t(f_km, TaT/T)
+        KMrL = _quad_t(f_km, TaL/T)
         TMrT = KMrT/CrT
         TMrL = KMrL/CrL
         out['T'] = T
