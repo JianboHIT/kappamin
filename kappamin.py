@@ -17,7 +17,7 @@ UNITS = {
     'T_a_L': 'K',               # Debye temperature of LA
 }
 
-def kernel(x):
+def _kernel(x):
     '''
     x^2*exp(x)/(exp(x)-1)^2
     '''
@@ -25,6 +25,17 @@ def kernel(x):
     q = np.power(1-np.exp(-x), 2)
     v = np.divide(p, q, 
                   out=np.ones_like(p+q), 
+                  where=(np.absolute(q)>1E-4))
+    return v
+
+def _core_bvk(x):
+    '''
+    3 * x^2 * (cos(pi/2 * x))^2 / sin(pi/2 * t)
+    '''
+    p = 3 * x**2 * np.cos(np.pi/2 * x)**2
+    q = np.sin(np.pi/2 * x)
+    v = np.divide(p, q,
+                  out=np.zeros_like(p+q),
                   where=(np.absolute(q)>1E-4))
     return v
 
@@ -50,8 +61,8 @@ def Debye(vT, vL, Natom, Vcell, T):
     factor_tmT = np.pi/WcT      # [ps]
     factor_tmL = np.pi/WcL
     
-    f_cv = lambda t, u: 3*t*t*kernel(u*t)
-    f_km = lambda t, u: 3*t*kernel(u*t)
+    f_cv = lambda t, u: 3*t*t*_kernel(u*t)
+    f_km = lambda t, u: 3*t*_kernel(u*t)
     
     # calculate
     out = dict()
@@ -83,13 +94,62 @@ def Debye(vT, vL, Natom, Vcell, T):
         out['T_a_L'] = TaL*np.ones_like(T)
     return out
 
-def BvK(vt, vl, natom, vcell, T):
-    Vatom = vcell/natom
-    v = (2*vt+vl)/3
-    if T == float('inf'):
-        pass
+def BvK(vT, vL, Natom, Vcell, T):
+    '''
+    Calculate BvK-Cahill minimum limit to thermal conductivity
+    '''
+    
+    # define constants for matching common units
+    kB = 13.80649
+    hb = 105.457182
+    
+    # define some factors and integrals
+    Vatom = Vcell/Natom     # [A^3]
+    Kc = np.power(6*np.pi*np.pi/Vatom, 1/3)  # [1/A]
+    WcT = 2/np.pi * vT * Kc * 10    # [km/s * 1/A] = [10 rad/ps] to [rad/ps]
+    WcL = 2/np.pi * vL * Kc * 10
+    TaT = hb/kB * WcT   # [K]
+    TaL = hb/kB * WcL
+    factor_cv = 3       # [kB]
+    factor_kmT = (kB*vT*vT)/Vatom * np.pi/WcT  # [W/m.K]
+    factor_kmL = (kB*vL*vL)/Vatom * np.pi/WcL
+    factor_tmT = np.pi/WcT      # [ps]
+    factor_tmL = np.pi/WcL
+    # factor_itg = quad(_core_bvk, 0, 1)[0]
+    factor_itg = 0.31456063126172384
+    
+    f_cv = lambda t, u: 3*t*t*_kernel(u*np.sin(np.pi/2 * t))
+    f_km = lambda t, u: _core_bvk(t)*_kernel(u*np.sin(np.pi/2 * t))
+    
+    # calculate
+    out = dict()
+    if isinstance(T, float) and (T == float('inf')):
+        # kernel --> 1
+        out['T'] = T
+        out['Cv'] = factor_cv
+        out['Kappa_min'] = (2*factor_kmT+factor_kmL)/3 * factor_itg
+        out['Tau_min'] = (2*factor_tmT+factor_tmL)/3 * factor_itg
+        out['Omega_a_T'] = WcT
+        out['Omega_a_L'] = WcL
+        out['T_a_T'] = TaT
+        out['T_a_L'] = TaL
     else:
-        pass
+        T = np.array(T)
+        CrT = quad(f_cv, 0, 1, args=(TaT/T,))[0]
+        CrL = quad(f_cv, 0, 1, args=(TaL/T,))[0]
+        KMrT = quad(f_km, 0, 1, args=(TaT/T,))[0]
+        KMrL = quad(f_km, 0, 1, args=(TaL/T,))[0]
+        TMrT = KMrT/CrT
+        TMrL = KMrL/CrL
+        out['T'] = T
+        out['Cv'] = factor_cv * (2*CrT+CrL)/3
+        out['Kappa_min'] = (2*factor_kmT*TMrT+factor_kmL*TMrL)/3
+        out['Tau_min'] = (2*factor_tmT*KMrT+factor_tmL*KMrL)/(2*CrT+CrL)
+        out['Omega_a_T'] = WcT*np.ones_like(T)
+        out['Omega_a_L'] = WcL*np.ones_like(T)
+        out['T_a_T'] = TaT*np.ones_like(T)
+        out['T_a_L'] = TaL*np.ones_like(T)
+    return out
 
 def Pei(vt, vl, natom, vcell, T):
     raise NotImplementedError
