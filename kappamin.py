@@ -97,7 +97,7 @@ def Pei(vt, vl, natom, vcell, T):
 def fileparser(filename, ktypes=None):
     # read config file
     config = configparser.ConfigParser()
-    config.SECTCRE = re.compile(r"\[ *(?P<header>[^]]+?) *\]")
+    config.SECTCRE = re.compile(r"\[ *(?P<header>[^]]+?) *\]")  # ignore blanks in section name
     config.read(filename)
     
     # optional: refine config file
@@ -110,14 +110,88 @@ def fileparser(filename, ktypes=None):
                 if sect.lower() == ktype.lower():
                     config2[ktype] = config[sect]
         return config2
+    
+def _section_parser(config, modeltype):
+    # keys = ['vT', 'vL', 'Natom', 'Vcell', 'T']
+    
+    paras = dict()
+    
+    # parser float
+    for key in ['vT', 'vL', 'Natom', 'Vcell']:
+        paras[key] = config.getfloat(modeltype, key)
+    
+    # parser temperature    
+    valueT = config[modeltype]['T']
+    isStep, valueT = _sequence_parser(valueT, func=float, defaultstep=1)
+    if isStep:
+        start, step, end = valueT
+        valueT = np.arange(start, end+0.01, step)
+    
+    # check type and return
+    if len(valueT) == 0:
+        raise ValueError('Failed to read temperature [T].')
+    elif len(valueT) == 1:
+        isSingle = True
+        paras['T'] = valueT[0]
+    else:
+        isSingle = False
+        paras['T'] = valueT
+    return isSingle, paras
 
+def _sequence_parser(value, func=float, defaultstep=1):
+    if ':' in value:
+        # sequence with step
+        values = value.strip().split(':')
+        if func is not None:
+            values = list(map(func, values))
+        if len(values) == 2:
+            start, end = values
+            step = defaultstep
+        elif len(values) == 3:
+            start, step, end = values
+        else:
+            raise ValueError('Failed to parser the sequence data.')
+        isStep = True
+        return isStep, (start, step, end)
+    else:
+        # any sequence
+        values = value.strip().split()
+        if func is not None:
+            values = map(func, values)
+        isStep = False
+        return isStep, list(values)
 
-if __name__ == '__main__':
+def _savedat_to_file(filename, datas, keys=None, 
+                     fmt='%.6f', header='auto', 
+                     isSingle=None):
+    # check default
+    if keys is None:
+        keys = ['T', 'Cv', 'Kappa_min', 'Tau_min', 
+                'Omega_a_T', 'Omega_a_L', 
+                'T_a_T', 'T_a_L',]
+    if isSingle is None:
+        if datas['Kappa_min'].ndim == 0:
+            isSingle = True
+        else:
+            isSingle = False
+    if header.lower().startswith('auto'):
+        props = ', '.join(keys)
+        units = ', '.join([UNITS[key] for key in keys])
+        header = '\n'.join([props, units])
+    
+    # access output datas
+    out = [datas[key] for key in keys]
+    if isSingle:
+        out = np.atleast_2d(out)
+    else:
+        out = np.vstack(out).T
+    np.savetxt(filename, out, fmt=fmt, header=header)
+
+def execute(filename=None, toFile=True, hasReturn=False):
     # access filename of config
     ktypes = ['Debye', 'BvK', 'Pei']
-    if len(sys.argv) > 1:
-        filename = sys.argv[1]
-    else:
+    if filename is None:
+        # auto-detect filename
         prefix = 'KAPPAMIN'
         suffix = ['cfg', 'ini', 'txt']
         for fn in ['{}.{}'.format(prefix, suf) for suf in suffix]:
@@ -128,37 +202,33 @@ if __name__ == '__main__':
             raise FileNotFoundError('Failed to find configuration file')
     config = fileparser(filename, ktypes)
     
-    # parser config file
+    # parser config file and calculate
     if 'Debye' in config.sections():
-        keys = ['vT', 'vL', 'Natom', 'Vcell', 'T']
-        paras = dict()
-        for key in keys:
-            paras[key] = config.getfloat('Debye', key)
-        Kmin = Debye(**paras)
-        if Kmin.ndim == 0:
-            Kmin = np.array([Kmin])
         fileout = 'Kappamin_Debye.dat'
-        np.savetxt(fileout, Kmin, fmt='%.6f')
+        isSingle, paras = _section_parser(config, 'Debye')        
+        out = Debye(**paras)
     elif 'BvK' in config.sections():
-        keys = ['vT', 'vL', 'Natom', 'Vcell', 'T']
-        paras = dict()
-        for key in keys:
-            paras[key] = config.getfloat('BvK', key)
-        Kmin = BvK(**paras)
-        if Kmin.ndim == 0:
-            Kmin = np.array([Kmin])
         fileout = 'Kappamin_BvK.dat'
-        np.savetxt(fileout, Kmin, fmt='%.6f')
+        isSingle, paras = _section_parser(config, 'BvK')        
+        out = BvK(**paras)
     elif 'Pei' in config.sections():
-        keys = ['vT', 'vL', 'Natom', 'Vcell', 'T']
-        paras = dict()
-        for key in keys:
-            paras[key] = config.getfloat('Pei', key)
-        Kmin = Pei(**paras)
-        if Kmin.ndim == 0:
-            Kmin = np.array([Kmin])
         fileout = 'Kappamin_Pei.dat'
-        np.savetxt(fileout, Kmin, fmt='%.6f')
+        isSingle, paras = _section_parser(config, 'Pei')
+        out = Pei(**paras)
     else:
         raise ValueError('Unknown method.(Valid: %s)', ', '.join(ktypes))
+    
+    # output and(or) save to file
+    if hasReturn:
+        return out
+    if toFile:
+        _savedat_to_file(fileout, out, isSingle=isSingle)
+    
+    
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        filename = sys.argv[1]
+    else: 
+        filename = None
+    execute(filename)
     
