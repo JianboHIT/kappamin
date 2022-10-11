@@ -6,6 +6,17 @@ import sys
 import re
 
 
+UNITS = {
+    'T' : 'K',                  # temperature
+    'Cv' : 'kB',                # heat capacity in kB
+    'Kappa_min': 'W/(m*K)',     # minimum limit kappa under tau=pi/omega
+    'Tau_min': 'ps',            # Kappa_min/(1/3*Cv*vs^2)
+    'Omega_a_T': 'rad/ps',      # Cut-off angular frequency of TA
+    'Omega_a_L': 'rad/ps',      # Cut-off angular frequency of LA
+    'T_a_T': 'K',               # Debye temperature of TA
+    'T_a_L': 'K',               # Debye temperature of LA
+}
+
 def kernel(x):
     '''
     x^2*exp(x)/(exp(x)-1)^2
