@@ -1,6 +1,16 @@
-[BvK]
-vt = 4.37
-vl = 7.36
-Natom = 2
-Vcell = 160.1
-T = 300
+[BvK]            # type of phonon dispersion 
+vt = 4.37        # transverse sound velocity in km/s 
+vl = 7.36        # longitudinal sound velocity in km/s 
+Natom = 2        # the number of atoms in a primitive cell  
+Vcell = 160.1    # the volume of a primitive cell in cubic angstrom [A^3]  
+T = 300          # temperature(s) in K [*Tips]
+
+
+# *Tips: 
+#  'inf' indicates ideal infinite temperature. A sequence
+# is also allowed, which can be separated space character
+# or in begin:step:end format. e.g.:
+#     T = inf
+#     T = 300 600 1000
+#     T = 300:200:900       # equal to 'T = 300 500 700 900' 
+
