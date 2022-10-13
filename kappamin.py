@@ -29,6 +29,20 @@ def _kernel(x):
                   where=(np.absolute(q)>1E-4))
     return v
 
+def _core_cv(x):
+    '''
+    3*t^2
+    '''
+    v = 3 * x**2
+    return v
+
+def _core_debye(x):
+    '''
+    3*t
+    '''
+    v = 3 * x
+    return v
+
 def _core_bvk(x):
     '''
     3 * x^2 * (cos(pi/2 * x))^2 / sin(pi/2 * t)
@@ -69,24 +83,25 @@ def Debye(vT, vL, Natom, Vcell, T):
     factor_tmL = np.pi/WcL
     factor_mfp = np.pi/Kc       # [A]
     
-    f_cv = lambda t, u: 3*t*t*_kernel(u*t)
-    f_km = lambda t, u: 3*t*_kernel(u*t)
-    
     # calculate
     out = dict()
     if isinstance(T, float) and (T == float('inf')):
         # kernel --> 1
+        # factor_itg = quad(_core_debye, 0, 1)[0]
+        factor_itg = 3/2
         out['T'] = T
         out['Cv'] = factor_cv
-        out['Kappa_min'] = (2*factor_kmT+factor_kmL)/3 * 3/2
-        out['Tau_min'] = (2*factor_tmT+factor_tmL)/3 * 3/2
-        out['MFP_min'] = factor_mfp * 3/2
+        out['Kappa_min'] = (2*factor_kmT+factor_kmL)/3 * factor_itg
+        out['Tau_min'] = (2*factor_tmT+factor_tmL)/3 * factor_itg
+        out['MFP_min'] = factor_mfp * factor_itg
         out['Omega_a_T'] = WcT
         out['Omega_a_L'] = WcL
         out['T_a_T'] = TaT
         out['T_a_L'] = TaL
     else:
         T = np.array(T)
+        f_cv = lambda t, u: _core_cv(t)*_kernel(u*t)
+        f_km = lambda t, u: _core_debye(t)*_kernel(u*t)
         CrT = _quad_t(f_cv, TaT/T)
         CrL = _quad_t(f_cv, TaL/T)
         KMrT = _quad_t(f_km, TaT/T)
@@ -126,16 +141,13 @@ def BvK(vT, vL, Natom, Vcell, T):
     factor_tmT = np.pi/WcT      # [ps]
     factor_tmL = np.pi/WcL
     factor_mfp = (np.pi/Kc) * np.pi/2   # [A]
-    # factor_itg = quad(_core_bvk, 0, 1)[0]
-    factor_itg = 0.31456063126172384
-    
-    f_cv = lambda t, u: 3*t*t*_kernel(u*np.sin(np.pi/2 * t))
-    f_km = lambda t, u: _core_bvk(t)*_kernel(u*np.sin(np.pi/2 * t))
     
     # calculate
     out = dict()
     if isinstance(T, float) and (T == float('inf')):
         # kernel --> 1
+        # factor_itg = quad(_core_bvk, 0, 1)[0]
+        factor_itg = 0.31456063126172384
         out['T'] = T
         out['Cv'] = factor_cv
         out['Kappa_min'] = (2*factor_kmT+factor_kmL)/3 * factor_itg
@@ -147,6 +159,8 @@ def BvK(vT, vL, Natom, Vcell, T):
         out['T_a_L'] = TaL
     else:
         T = np.array(T)
+        f_cv = lambda t, u: _core_cv(t)*_kernel(u*np.sin(np.pi/2 * t))
+        f_km = lambda t, u: _core_bvk(t)*_kernel(u*np.sin(np.pi/2 * t))
         CrT = _quad_t(f_cv, TaT/T)
         CrL = _quad_t(f_cv, TaL/T)
         KMrT = _quad_t(f_km, TaT/T)
