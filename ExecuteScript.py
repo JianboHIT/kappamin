@@ -12,7 +12,8 @@ from kappamin import execute
 
 fileinput = None
 # Option Values:
-#     'None': auto detect filename of configuration
-#   filename: assign the filename of configuration
+#         None: auto-detect filename of configuration
+#               (KAPPAMIN.cfg, KAPPAMIN.ini or KAPPAMIN.txt')
+#   'filename': assign the filename of configuration
 
 execute(filename=fileinput)
