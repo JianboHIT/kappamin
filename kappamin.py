@@ -183,7 +183,7 @@ def Pei(vt, vl, natom, vcell, T):
 
 def fileparser(filename, ktypes=None):
     # read config file
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(inline_comment_prefixes=('#',))
     config.SECTCRE = re.compile(r"\[ *(?P<header>[^]]+?) *\]")  # ignore blanks in section name
     config.read(filename)
     
