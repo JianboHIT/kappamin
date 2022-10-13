@@ -11,6 +11,7 @@ UNITS = {
     'Cv' : 'kB',                # heat capacity in kB
     'Kappa_min': 'W/(m*K)',     # minimum limit kappa under tau=pi/omega
     'Tau_min': 'ps',            # Kappa_min/(1/3*Cv*vs^2)
+    'MFP_min': 'A',             # Kappa_min/(1/3*Cv*vs)
     'Omega_a_T': 'rad/ps',      # Cut-off angular frequency of TA
     'Omega_a_L': 'rad/ps',      # Cut-off angular frequency of LA
     'T_a_T': 'K',               # Debye temperature of TA
@@ -66,6 +67,7 @@ def Debye(vT, vL, Natom, Vcell, T):
     factor_kmL = (kB*vL*vL)/Vatom * np.pi/WcL
     factor_tmT = np.pi/WcT      # [ps]
     factor_tmL = np.pi/WcL
+    factor_mfp = np.pi/Kc       # [A]
     
     f_cv = lambda t, u: 3*t*t*_kernel(u*t)
     f_km = lambda t, u: 3*t*_kernel(u*t)
@@ -78,6 +80,7 @@ def Debye(vT, vL, Natom, Vcell, T):
         out['Cv'] = factor_cv
         out['Kappa_min'] = (2*factor_kmT+factor_kmL)/3 * 3/2
         out['Tau_min'] = (2*factor_tmT+factor_tmL)/3 * 3/2
+        out['MFP_min'] = factor_mfp * 3/2
         out['Omega_a_T'] = WcT
         out['Omega_a_L'] = WcL
         out['T_a_T'] = TaT
@@ -94,6 +97,7 @@ def Debye(vT, vL, Natom, Vcell, T):
         out['Cv'] = factor_cv * (2*CrT+CrL)/3
         out['Kappa_min'] = (2*factor_kmT*TMrT+factor_kmL*TMrL)/3
         out['Tau_min'] = (2*factor_tmT*KMrT+factor_tmL*KMrL)/(2*CrT+CrL)
+        out['MFP_min'] = factor_mfp * (2*KMrT+KMrL)/(2*CrT+CrL)
         out['Omega_a_T'] = WcT*np.ones_like(T)
         out['Omega_a_L'] = WcL*np.ones_like(T)
         out['T_a_T'] = TaT*np.ones_like(T)
@@ -121,6 +125,7 @@ def BvK(vT, vL, Natom, Vcell, T):
     factor_kmL = (kB*vL*vL)/Vatom * np.pi/WcL
     factor_tmT = np.pi/WcT      # [ps]
     factor_tmL = np.pi/WcL
+    factor_mfp = (np.pi/Kc) * np.pi/2   # [A]
     # factor_itg = quad(_core_bvk, 0, 1)[0]
     factor_itg = 0.31456063126172384
     
@@ -135,6 +140,7 @@ def BvK(vT, vL, Natom, Vcell, T):
         out['Cv'] = factor_cv
         out['Kappa_min'] = (2*factor_kmT+factor_kmL)/3 * factor_itg
         out['Tau_min'] = (2*factor_tmT+factor_tmL)/3 * factor_itg
+        out['MFP_min'] = factor_mfp * factor_itg
         out['Omega_a_T'] = WcT
         out['Omega_a_L'] = WcL
         out['T_a_T'] = TaT
@@ -151,6 +157,7 @@ def BvK(vT, vL, Natom, Vcell, T):
         out['Cv'] = factor_cv * (2*CrT+CrL)/3
         out['Kappa_min'] = (2*factor_kmT*TMrT+factor_kmL*TMrL)/3
         out['Tau_min'] = (2*factor_tmT*KMrT+factor_tmL*KMrL)/(2*CrT+CrL)
+        out['MFP_min'] = factor_mfp * (2*KMrT+KMrL)/(2*CrT+CrL)
         out['Omega_a_T'] = WcT*np.ones_like(T)
         out['Omega_a_L'] = WcL*np.ones_like(T)
         out['T_a_T'] = TaT*np.ones_like(T)
@@ -232,7 +239,8 @@ def _savedat_to_file(filename, datas, keys=None,
                      isSingle=None):
     # check default
     if keys is None:
-        keys = ['T', 'Cv', 'Kappa_min', 'Tau_min', 
+        keys = ['T', 'Cv', 'Kappa_min', 
+                'Tau_min', 'MFP_min',
                 'Omega_a_T', 'Omega_a_L', 
                 'T_a_T', 'T_a_L',]
     if isSingle is None:
