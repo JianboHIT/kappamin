@@ -1,0 +1,6 @@
+2022.10.11[v0.0.1] Initial package version
+
+1. Develop Debye and BvK model
+2. Output Cv, Kappa_min, Tau_min, cut-off frequency, etc.
+3. Support vectorized temperature calculations
+4. Support three run mode: Script, Cmd, Module
