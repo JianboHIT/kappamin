@@ -10,6 +10,8 @@ UNITS = {
     'T' : 'K',                  # temperature
     'Cv' : 'kB',                # heat capacity in kB
     'Kappa_min': 'W/(m*K)',     # minimum limit kappa under tau=pi/omega
+    'Kappa_min_A': 'W/(m*K)',   # contribution of acoustic branches
+    'Kappa_min_O': 'W/(m*K)',   # contribution of optical branches
     'Tau_min': 'ps',            # Kappa_min/(1/3*Cv*vs^2)
     'MFP_min': 'A',             # Kappa_min/(1/3*Cv*vs)
     'Omega_a_T': 'rad/ps',      # Cut-off angular frequency of TA
@@ -178,8 +180,25 @@ def BvK(vT, vL, Natom, Vcell, T):
         out['T_a_L'] = TaL*np.ones_like(T)
     return out
 
-def Pei(vt, vl, natom, vcell, T):
-    raise NotImplementedError
+def Pei(vT, vL, Natom, Vcell, T):
+    '''
+    Calculate Pei-Cahill minimum limit to thermal conductivity
+    '''
+    
+    vs = (3/(2/vT**3+1/vL**3))**(1/3)
+    out = BvK(vT=vs,
+              vL=vs,
+              Natom=1,
+              Vcell=Vcell,
+              T=T)
+    out['Kappa_min_A'] = out['Kappa_min']
+    out['Kappa_min_O'] = 0 * out['Kappa_min']
+    
+    # same as BvK model when Natom = 1
+    if Natom == 1:
+        return out
+    else:
+        raise NotImplementedError('Only support Natom = 1')
 
 def fileparser(filename, ktypes=None):
     # read config file
