@@ -9,11 +9,11 @@ import re
 
 UNITS = OrderedDict()
 UNITS['T'] = 'K'                    # temperature
-UNITS['vs'] = 'km/s'                # average sound velocity, vs = (3/(2/vT**3+1/vL**3))**(1/3)
 UNITS['Cv'] = 'kB'                  # heat capacity in kB
 UNITS['Kappa_min'] = 'W/(m*K)'      # minimum limit kappa under tau=pi/omega
 UNITS['Kappa_min_A'] = 'W/(m*K)'    # contribution of acoustic branches
 UNITS['Kappa_min_O'] = 'W/(m*K)'    # contribution of optical branches
+UNITS['vs'] = 'km/s'                # average sound velocity, vs = (3/(2/vT**3+1/vL**3))**(1/3)
 UNITS['Tau_min'] = 'ps'             # Kappa_min/(1/3*Cv*vs^2)
 UNITS['MFP_min'] = 'A'              # Kappa_min/(1/3*Cv*vs)
 UNITS['Omega_a_T'] = 'rad/ps'       # Cut-off angular frequency of TA
@@ -79,6 +79,7 @@ def Debye(vT, vL, Natom, Vcell, T):
     WcL = vL * Kc * 10
     TaT = hb/kB * WcT   # [K]
     TaL = hb/kB * WcL
+    vs = (3/(2/vT**3+1/vL**3))**(1/3)
     factor_cv = 3       # [kB]
     factor_kmT = (kB*vT*vT)/Vatom * np.pi/WcT  # [W/m.K]
     factor_kmL = (kB*vL*vL)/Vatom * np.pi/WcL
@@ -99,6 +100,7 @@ def Debye(vT, vL, Natom, Vcell, T):
         out['Omega_a_L'] = WcL
         out['T_a_T'] = TaT
         out['T_a_L'] = TaL
+        out['vs'] = vs
     else:
         T = np.array(T)
         f_cv = lambda t, u: _core_cv(t)*_kernel(u*t)
@@ -116,8 +118,8 @@ def Debye(vT, vL, Natom, Vcell, T):
         out['Omega_a_L'] = WcL*np.ones_like(T)
         out['T_a_T'] = TaT*np.ones_like(T)
         out['T_a_L'] = TaL*np.ones_like(T)
+        out['vs'] = vs*np.ones_like(T)
         
-    out['vs'] = (3/(2/vT**3+1/vL**3))**(1/3)
     out['Kappa_min_A'] = out['Kappa_min']
     out['Kappa_min_O'] = 0 * out['Kappa_min']
     out['Tau_min'] = out['Kappa_min']/(1/3 * out['Cv']*kB/Vatom * out['vs']**2)     # [ps]
@@ -141,6 +143,7 @@ def BvK(vT, vL, Natom, Vcell, T):
     TaT = hb/kB * WcT   # [K]
     TaL = hb/kB * WcL
     factor_cv = 3       # [kB]
+    vs = (3/(2/vT**3+1/vL**3))**(1/3)
     factor_kmT = (kB*vT*vT)/Vatom * np.pi/WcT  # [W/m.K]
     factor_kmL = (kB*vL*vL)/Vatom * np.pi/WcL
     # factor_tmT = np.pi/WcT      # [ps]
@@ -160,6 +163,7 @@ def BvK(vT, vL, Natom, Vcell, T):
         out['Omega_a_L'] = WcL
         out['T_a_T'] = TaT
         out['T_a_L'] = TaL
+        out['vs'] = vs
     else:
         T = np.array(T)
         f_cv = lambda t, u: _core_cv(t)*_kernel(u*np.sin(np.pi/2 * t))
@@ -177,8 +181,8 @@ def BvK(vT, vL, Natom, Vcell, T):
         out['Omega_a_L'] = WcL*np.ones_like(T)
         out['T_a_T'] = TaT*np.ones_like(T)
         out['T_a_L'] = TaL*np.ones_like(T)
+        out['vs'] = vs*np.ones_like(T)
     
-    out['vs'] = (3/(2/vT**3+1/vL**3))**(1/3)
     out['Kappa_min_A'] = out['Kappa_min']
     out['Kappa_min_O'] = 0 * out['Kappa_min']
     out['Tau_min'] = out['Kappa_min']/(1/3 * out['Cv']*kB/Vatom * out['vs']**2)     # [ps]
@@ -219,8 +223,7 @@ def Pei(vT, vL, Natom, Vcell, T):
     # factor_mfp = (np.pi/Kc) * np.pi/2   # [A]
     
     # calculate
-    out = dict()
-    kir = [(np.power(i/Natom, 3)+np.power((i+1)/Natom, 3))/2 for i in range(1,Natom)]
+    kir = [(np.power(i/Natom, 3)+np.power((i+1)/Natom, 3))/2 for i in range(1,round(Natom))]
     if isinstance(T, float) and (T == float('inf')):
         kir = np.array(kir)
         wr = np.sin(np.pi/2 * kir)
@@ -231,11 +234,11 @@ def Pei(vT, vL, Natom, Vcell, T):
     else:
         T = out['T']
         shp = [-1,]+[1 for _ in range(T.ndim)]
-        kir = np.array(kir).reshape(shape=shp)
+        kir = np.array(kir).reshape(shp)
         wr = np.sin(np.pi/2 * kir)
         vr = np.cos(np.pi/2 * kir)
-        km_O = factor_km * vr**2 / wr * _kernel(To*wr)
-        cv_O = factor_cv * _kernel(To*wr)
+        km_O = factor_km * vr**2 / wr * _kernel(To/T*wr)
+        cv_O = factor_cv * _kernel(To/T*wr)
         out['Kappa_min_O'] = np.sum(km_O, axis=0)
         out['Kappa_min'] = out['Kappa_min_A'] + out['Kappa_min_O']
         out['Cv'] = (out['Cv']+np.sum(cv_O, axis=0))/Natom
