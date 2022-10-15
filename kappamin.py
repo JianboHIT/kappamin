@@ -197,8 +197,50 @@ def Pei(vT, vL, Natom, Vcell, T):
     # same as BvK model when Natom = 1
     if Natom == 1:
         return out
+    # else:
+    #     raise NotImplementedError('Only support Natom = 1')
+    
+    # for Natom != 1
+    # define constants for matching common units
+    kB = 13.80649
+    hb = 105.457182
+    
+    # define some factors and integrals
+    Vatom = Vcell/Natom     # [A^3]
+    Kc = np.power(6*np.pi*np.pi/Vatom, 1/3)  # [1/A], Kc ~ Vatom, Kcc ~ Vcell
+    Wc = 2/np.pi * vs * Kc * 10     # [km/s * 1/A] = [10 rad/ps] to [rad/ps]
+    To = hb/kB * Wc     # [K]
+    factor_cv = 3       # [kB]
+    factor_km = (kB*vs*vs)/Vcell * np.pi/Wc  # [W/m.K], here Vcell=Natom*Natom
+    factor_tm = np.pi/Wc      # [ps]
+    factor_mfp = (np.pi/Kc) * np.pi/2   # [A]
+    
+    # calculate
+    out = dict()
+    kir = [(np.power(i/Natom, 3)+np.power((i+1)/Natom, 3))/2 for i in range(1,Natom)]
+    if isinstance(T, float) and (T == float('inf')):
+        kir = np.array(kir)
+        wr = np.sin(np.pi/2 * kir)
+        vr = np.cos(np.pi/2 * kir)
+        km_O = factor_km * vr**2 / wr
+        out['Kappa_min_O'] = np.sum(km_O)
+        out['Kappa_min'] = out['Kappa_min_A'] + out['Kappa_min_O']
+        out['Tau_min'] = 0
+        out['MFP_min'] = 0
     else:
-        raise NotImplementedError('Only support Natom = 1')
+        T = out['T']
+        shp = [-1,]+[1 for _ in range(T.ndim)]
+        kir = np.array(kir).reshape(shape=shp)
+        wr = np.sin(np.pi/2 * kir)
+        vr = np.cos(np.pi/2 * kir)
+        km_O = factor_km * vr**2 / wr * _kernel(To*wr)
+        cv_O = factor_cv * _kernel(To*wr)
+        out['Kappa_min_O'] = np.sum(km_O, axis=0)
+        out['Kappa_min'] = out['Kappa_min_A'] + out['Kappa_min_O']
+        out['Cv'] = (out['Cv']+np.sum(cv_O, axis=0))/Natom
+        out['Tau_min'] = np.zeros_like(T)
+        out['MFP_min'] = np.zeros_like(T)
+    return out
 
 def fileparser(filename, ktypes=None):
     # read config file
