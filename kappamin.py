@@ -4,6 +4,7 @@ import numpy as np
 from scipy.integrate import quad
 import os
 import sys
+import io
 import re
 
 
@@ -343,7 +344,11 @@ def _savedat_to_file(filename, datas, keys=None,
         out = np.atleast_2d(out)
     else:
         out = np.vstack(out).T
-    np.savetxt(filename, out, fmt=fmt, header=header)
+    s = io.StringIO()
+    np.savetxt(s, out, fmt=fmt, header=header)
+    rst = s.getvalue().replace('\ninf', '\ninf       ')
+    with open(filename, 'w') as f:
+        f.write(rst)
 
 def execute(filename=None, toFile=True, hasReturn=False):
     # access filename of config
