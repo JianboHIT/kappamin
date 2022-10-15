@@ -9,6 +9,7 @@ import re
 
 UNITS = OrderedDict()
 UNITS['T'] = 'K'                    # temperature
+UNITS['vs'] = 'km/s'                # average sound velocity, vs = (3/(2/vT**3+1/vL**3))**(1/3)
 UNITS['Cv'] = 'kB'                  # heat capacity in kB
 UNITS['Kappa_min'] = 'W/(m*K)'      # minimum limit kappa under tau=pi/omega
 UNITS['Kappa_min_A'] = 'W/(m*K)'    # contribution of acoustic branches
@@ -81,9 +82,9 @@ def Debye(vT, vL, Natom, Vcell, T):
     factor_cv = 3       # [kB]
     factor_kmT = (kB*vT*vT)/Vatom * np.pi/WcT  # [W/m.K]
     factor_kmL = (kB*vL*vL)/Vatom * np.pi/WcL
-    factor_tmT = np.pi/WcT      # [ps]
-    factor_tmL = np.pi/WcL
-    factor_mfp = np.pi/Kc       # [A]
+    # factor_tmT = np.pi/WcT      # [ps]
+    # factor_tmL = np.pi/WcL
+    # factor_mfp = np.pi/Kc       # [A]
     
     # calculate
     out = dict()
@@ -94,14 +95,10 @@ def Debye(vT, vL, Natom, Vcell, T):
         out['T'] = T
         out['Cv'] = factor_cv
         out['Kappa_min'] = (2*factor_kmT+factor_kmL)/3 * factor_itg
-        out['Tau_min'] = (2*factor_tmT+factor_tmL)/3 * factor_itg
-        out['MFP_min'] = factor_mfp * factor_itg
         out['Omega_a_T'] = WcT
         out['Omega_a_L'] = WcL
         out['T_a_T'] = TaT
         out['T_a_L'] = TaL
-        out['Kappa_min_A'] = out['Kappa_min']
-        out['Kappa_min_O'] = 0
     else:
         T = np.array(T)
         f_cv = lambda t, u: _core_cv(t)*_kernel(u*t)
@@ -115,14 +112,16 @@ def Debye(vT, vL, Natom, Vcell, T):
         out['T'] = T
         out['Cv'] = factor_cv * (2*CrT+CrL)/3
         out['Kappa_min'] = (2*factor_kmT*TMrT+factor_kmL*TMrL)/3
-        out['Tau_min'] = (2*factor_tmT*KMrT+factor_tmL*KMrL)/(2*CrT+CrL)
-        out['MFP_min'] = factor_mfp * (2*KMrT+KMrL)/(2*CrT+CrL)
         out['Omega_a_T'] = WcT*np.ones_like(T)
         out['Omega_a_L'] = WcL*np.ones_like(T)
         out['T_a_T'] = TaT*np.ones_like(T)
         out['T_a_L'] = TaL*np.ones_like(T)
-        out['Kappa_min_A'] = out['Kappa_min']
-        out['Kappa_min_O'] = np.zeros_like(T)
+        
+    out['vs'] = (3/(2/vT**3+1/vL**3))**(1/3)
+    out['Kappa_min_A'] = out['Kappa_min']
+    out['Kappa_min_O'] = 0 * out['Kappa_min']
+    out['Tau_min'] = out['Kappa_min']/(1/3 * out['Cv']*kB/Vatom * out['vs']**2)     # [ps]
+    out['MFP_min'] = out['Tau_min'] * out['vs'] * 10 # [ps*km/s] = [ps*nm/ps] = [nm] to [A]
     return out
 
 def BvK(vT, vL, Natom, Vcell, T):
@@ -144,9 +143,9 @@ def BvK(vT, vL, Natom, Vcell, T):
     factor_cv = 3       # [kB]
     factor_kmT = (kB*vT*vT)/Vatom * np.pi/WcT  # [W/m.K]
     factor_kmL = (kB*vL*vL)/Vatom * np.pi/WcL
-    factor_tmT = np.pi/WcT      # [ps]
-    factor_tmL = np.pi/WcL
-    factor_mfp = (np.pi/Kc) * np.pi/2   # [A]
+    # factor_tmT = np.pi/WcT      # [ps]
+    # factor_tmL = np.pi/WcL
+    # factor_mfp = (np.pi/Kc) * np.pi/2   # [A]
     
     # calculate
     out = dict()
@@ -157,14 +156,10 @@ def BvK(vT, vL, Natom, Vcell, T):
         out['T'] = T
         out['Cv'] = factor_cv
         out['Kappa_min'] = (2*factor_kmT+factor_kmL)/3 * factor_itg
-        out['Tau_min'] = (2*factor_tmT+factor_tmL)/3 * factor_itg
-        out['MFP_min'] = factor_mfp * factor_itg
         out['Omega_a_T'] = WcT
         out['Omega_a_L'] = WcL
         out['T_a_T'] = TaT
         out['T_a_L'] = TaL
-        out['Kappa_min_A'] = out['Kappa_min']
-        out['Kappa_min_O'] = 0
     else:
         T = np.array(T)
         f_cv = lambda t, u: _core_cv(t)*_kernel(u*np.sin(np.pi/2 * t))
@@ -178,14 +173,16 @@ def BvK(vT, vL, Natom, Vcell, T):
         out['T'] = T
         out['Cv'] = factor_cv * (2*CrT+CrL)/3
         out['Kappa_min'] = (2*factor_kmT*TMrT+factor_kmL*TMrL)/3
-        out['Tau_min'] = (2*factor_tmT*KMrT+factor_tmL*KMrL)/(2*CrT+CrL)
-        out['MFP_min'] = factor_mfp * (2*KMrT+KMrL)/(2*CrT+CrL)
         out['Omega_a_T'] = WcT*np.ones_like(T)
         out['Omega_a_L'] = WcL*np.ones_like(T)
         out['T_a_T'] = TaT*np.ones_like(T)
         out['T_a_L'] = TaL*np.ones_like(T)
-        out['Kappa_min_A'] = out['Kappa_min']
-        out['Kappa_min_O'] = np.zeros_like(T)
+    
+    out['vs'] = (3/(2/vT**3+1/vL**3))**(1/3)
+    out['Kappa_min_A'] = out['Kappa_min']
+    out['Kappa_min_O'] = 0 * out['Kappa_min']
+    out['Tau_min'] = out['Kappa_min']/(1/3 * out['Cv']*kB/Vatom * out['vs']**2)     # [ps]
+    out['MFP_min'] = out['Tau_min'] * out['vs'] * 10 # [ps*km/s] = [ps*nm/ps] = [nm] to [A]
     return out
 
 def Pei(vT, vL, Natom, Vcell, T):
@@ -218,8 +215,8 @@ def Pei(vT, vL, Natom, Vcell, T):
     To = hb/kB * Wc     # [K]
     factor_cv = 3       # [kB]
     factor_km = (kB*vs*vs)/Vcell * np.pi/Wc  # [W/m.K], here Vcell=Natom*Natom
-    factor_tm = np.pi/Wc      # [ps]
-    factor_mfp = (np.pi/Kc) * np.pi/2   # [A]
+    # factor_tm = np.pi/Wc      # [ps]
+    # factor_mfp = (np.pi/Kc) * np.pi/2   # [A]
     
     # calculate
     out = dict()
@@ -231,8 +228,6 @@ def Pei(vT, vL, Natom, Vcell, T):
         km_O = factor_km * vr**2 / wr
         out['Kappa_min_O'] = np.sum(km_O)
         out['Kappa_min'] = out['Kappa_min_A'] + out['Kappa_min_O']
-        out['Tau_min'] = 0
-        out['MFP_min'] = 0
     else:
         T = out['T']
         shp = [-1,]+[1 for _ in range(T.ndim)]
@@ -244,8 +239,9 @@ def Pei(vT, vL, Natom, Vcell, T):
         out['Kappa_min_O'] = np.sum(km_O, axis=0)
         out['Kappa_min'] = out['Kappa_min_A'] + out['Kappa_min_O']
         out['Cv'] = (out['Cv']+np.sum(cv_O, axis=0))/Natom
-        out['Tau_min'] = np.zeros_like(T)
-        out['MFP_min'] = np.zeros_like(T)
+    
+    out['Tau_min'] = out['Kappa_min']/(1/3 * out['Cv']*kB/Vatom * out['vs']**2)     # [ps]
+    out['MFP_min'] = out['Tau_min'] * out['vs'] * 10 # [ps*km/s] = [ps*nm/ps] = [nm] to [A]
     return out
 
 def fileparser(filename, ktypes=None):
