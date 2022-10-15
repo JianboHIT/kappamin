@@ -3,7 +3,7 @@ A python3 code for calculations of the minimum limit to thermal conductivity
 
 ## Features
 
-- Models of the Cahill minimum limit to thermal conductivity
+- Models of the minimum limit to thermal conductivity under Cahill assumption
   - Debye model
   - BvK (Born–von Karman) model
   - Pei model
