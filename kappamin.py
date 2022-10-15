@@ -1,4 +1,5 @@
 import configparser
+from collections import OrderedDict
 import numpy as np
 from scipy.integrate import quad
 import os
@@ -6,19 +7,18 @@ import sys
 import re
 
 
-UNITS = {
-    'T' : 'K',                  # temperature
-    'Cv' : 'kB',                # heat capacity in kB
-    'Kappa_min': 'W/(m*K)',     # minimum limit kappa under tau=pi/omega
-    'Kappa_min_A': 'W/(m*K)',   # contribution of acoustic branches
-    'Kappa_min_O': 'W/(m*K)',   # contribution of optical branches
-    'Tau_min': 'ps',            # Kappa_min/(1/3*Cv*vs^2)
-    'MFP_min': 'A',             # Kappa_min/(1/3*Cv*vs)
-    'Omega_a_T': 'rad/ps',      # Cut-off angular frequency of TA
-    'Omega_a_L': 'rad/ps',      # Cut-off angular frequency of LA
-    'T_a_T': 'K',               # Debye temperature of TA
-    'T_a_L': 'K',               # Debye temperature of LA
-}
+UNITS = OrderedDict()
+UNITS['T'] = 'K'                    # temperature
+UNITS['Cv'] = 'kB'                  # heat capacity in kB
+UNITS['Kappa_min'] = 'W/(m*K)'      # minimum limit kappa under tau=pi/omega
+UNITS['Kappa_min_A'] = 'W/(m*K)'    # contribution of acoustic branches
+UNITS['Kappa_min_O'] = 'W/(m*K)'    # contribution of optical branches
+UNITS['Tau_min'] = 'ps'             # Kappa_min/(1/3*Cv*vs^2)
+UNITS['MFP_min'] = 'A'              # Kappa_min/(1/3*Cv*vs)
+UNITS['Omega_a_T'] = 'rad/ps'       # Cut-off angular frequency of TA
+UNITS['Omega_a_L'] = 'rad/ps'       # Cut-off angular frequency of LA
+UNITS['T_a_T'] = 'K'                # Debye temperature of TA
+UNITS['T_a_L'] = 'K'                # Debye temperature of LA
 
 def _kernel(x):
     '''
@@ -100,6 +100,8 @@ def Debye(vT, vL, Natom, Vcell, T):
         out['Omega_a_L'] = WcL
         out['T_a_T'] = TaT
         out['T_a_L'] = TaL
+        out['Kappa_min_A'] = out['Kappa_min']
+        out['Kappa_min_O'] = 0
     else:
         T = np.array(T)
         f_cv = lambda t, u: _core_cv(t)*_kernel(u*t)
@@ -119,6 +121,8 @@ def Debye(vT, vL, Natom, Vcell, T):
         out['Omega_a_L'] = WcL*np.ones_like(T)
         out['T_a_T'] = TaT*np.ones_like(T)
         out['T_a_L'] = TaL*np.ones_like(T)
+        out['Kappa_min_A'] = out['Kappa_min']
+        out['Kappa_min_O'] = np.zeros_like(T)
     return out
 
 def BvK(vT, vL, Natom, Vcell, T):
@@ -159,6 +163,8 @@ def BvK(vT, vL, Natom, Vcell, T):
         out['Omega_a_L'] = WcL
         out['T_a_T'] = TaT
         out['T_a_L'] = TaL
+        out['Kappa_min_A'] = out['Kappa_min']
+        out['Kappa_min_O'] = 0
     else:
         T = np.array(T)
         f_cv = lambda t, u: _core_cv(t)*_kernel(u*np.sin(np.pi/2 * t))
@@ -178,6 +184,8 @@ def BvK(vT, vL, Natom, Vcell, T):
         out['Omega_a_L'] = WcL*np.ones_like(T)
         out['T_a_T'] = TaT*np.ones_like(T)
         out['T_a_L'] = TaL*np.ones_like(T)
+        out['Kappa_min_A'] = out['Kappa_min']
+        out['Kappa_min_O'] = np.zeros_like(T)
     return out
 
 def Pei(vT, vL, Natom, Vcell, T):
@@ -191,8 +199,6 @@ def Pei(vT, vL, Natom, Vcell, T):
               Natom=1,
               Vcell=Vcell,
               T=T)
-    out['Kappa_min_A'] = out['Kappa_min']
-    out['Kappa_min_O'] = 0 * out['Kappa_min']
     
     # same as BvK model when Natom = 1
     if Natom == 1:
@@ -314,10 +320,7 @@ def _savedat_to_file(filename, datas, keys=None,
                      isSingle=None):
     # check default
     if keys is None:
-        keys = ['T', 'Cv', 'Kappa_min', 
-                'Tau_min', 'MFP_min',
-                'Omega_a_T', 'Omega_a_L', 
-                'T_a_T', 'T_a_L',]
+        keys = UNITS.keys()
     if isSingle is None:
         if datas['Kappa_min'].ndim == 0:
             isSingle = True
