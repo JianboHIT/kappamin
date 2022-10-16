@@ -224,7 +224,7 @@ def Pei(vT, vL, Natom, Vcell, T):
     # factor_mfp = (np.pi/Kc) * np.pi/2   # [A]
     
     # calculate
-    kir = [(np.power(i/Natom, 3)+np.power((i+1)/Natom, 3))/2 for i in range(1,round(Natom))]
+    kir = [(np.power(i/Natom, 1/3)+np.power((i+1)/Natom, 1/3))/2 for i in range(1,round(Natom))]
     if isinstance(T, float) and (T == float('inf')):
         kir = np.array(kir)
         wr = np.sin(np.pi/2 * kir)
