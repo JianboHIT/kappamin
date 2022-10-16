@@ -19,7 +19,7 @@ A python3 code for calculations of the minimum limit to thermal conductivity
   - Based on prepared scripts (for general researchers without programming skills)
   - Use as a python module (for expert usage)
 
-# Getting Started
+## Getting Started
 
 In order to install the module, you need to install the dependencies first:
 
