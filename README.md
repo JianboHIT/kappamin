@@ -62,9 +62,9 @@ On Linux or Windows Terminal:
 $ python ExceuteScript.py
 ```
 
-On Windows, if it has been configured that the default program to open .py file is python3,
+**On Windows, if it has been configured that the default program to open .py file is python3,
 you just need to move ExceuteScript.py to the directory at where the configuration file is located
-and double-click it to run.
+and *double-click* it to run.**
 
 ## Feedback and report bugs
 
