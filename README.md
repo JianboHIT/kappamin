@@ -3,10 +3,10 @@ A python3 code for calculations of the minimum limit to thermal conductivity
 
 ## Features
 
-- Models of the minimum limit to thermal conductivity under Cahill assumption
-  - Debye model
-  - BvK (Born–von Karman) model
-  - Pei model
+- Models of the minimum limit to thermal conductivity under Cahill assumption[^1]
+  - Debye model[^2]
+  - BvK (Born–von Karman) model[^3]
+  - Pei model[^4]
 - Temperature-dependence
   - Finite temperature
   - Ideal infinite temperature
@@ -76,3 +76,15 @@ See [GitHub Issue page](../../issues).
 
 - 2022.10.06 v0.0.1 Initial package version
 
+
+<br/><br/>
+
+## Reference
+
+[^1]: D.G. Cahill, R.O. Pohl, Heat flow and lattice vibrations in glasses, Solid State Communications, 70 (10) (1989) 927-930. [https://doi.org/10.1016/0038-1098(89)90630-3](https://doi.org/10.1016/0038-1098(89)90630-3)
+
+[^2]: P. Debye, Zur theorie der spezifischen wärmen, Annalen Der Physik, 344 (14) (1912) 789-839. [https://doi.org/10.1002/andp.19123441404](https://doi.org/10.1002/andp.19123441404)
+
+[^3]: M. Born, T. Von Karman, Vibrations in space gratings (molecular frequencies), Z Phys, 13 (1912) 297-309.
+
+[^4]: Z. Chen, X. Zhang, S. Lin, L. Chen, Y. Pei, Rationalizing phonon dispersion for lattice thermal conductivity of solids, National Science Review, 5 (6) (2018) 888-894. [https://doi.org/10.1093/nsr/nwy097](https://doi.org/10.1093/nsr/nwy097)
