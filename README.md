@@ -68,6 +68,12 @@ python ExceuteScript.py
 you just need to move ExceuteScript.py to the directory at where the configuration file is located
 and *double-click* it to run.**
 
+Moreover, advanced users may prefer to skip the command-line interface
+and access the full feature set of `kappamin` more directly. 
+Those wanting to use the interpolation capabilities of `kappamin` in their own code, 
+or using it as part of an automated workflow, 
+ones can see [Example_AsModule.py](Example_AsModule.py).
+
 ## Feedback and report bugs
 
 See [GitHub Issue page](https://github.com/JianboHIT/kappamin/issues).
