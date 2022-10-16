@@ -74,8 +74,8 @@ See [GitHub Issue page](../../issues).
 
 (More details see [CHANGELOG](CHANGELOG))
 
-- 2022.10.06 v0.0.1 Initial package version
 - 2022.10.16 v0.1.0 Develop Debye, BvK, and Pei models
+- 2022.10.06 v0.0.1 Initial package version
 
 
 <br/><br/>
