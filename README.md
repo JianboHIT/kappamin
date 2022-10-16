@@ -1,6 +1,8 @@
 # kappamin
 A python3 code for calculations of the minimum limit to thermal conductivity
 
+<img src="PhononDispersionModel.jpg" width="85%">
+
 ## Features
 
 - Models of the minimum limit to thermal conductivity under Cahill assumption[^1]
