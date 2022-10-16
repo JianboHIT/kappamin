@@ -1,3 +1,25 @@
+2022.10.16[v0.1.0] Improve README and output format
+
+1. Improve output format
+2. Add Getting-Started section in README.md
+3. Add Bug-Report and Change-Log section in README.md
+4. Add Reference section in README.md
+5. Remove under-developed label
+
+
+2022.10.15[v0.0.3] Support Pei-Cahill model
+
+1. Support Pei model
+2. Add "vs" output
+3. Re-define Tau_min and MFP_min
+
+
+2022.10.15[v0.0.2] Improve output
+
+1. Add MFP_min output
+2. Allow inline comment (begin with "#")
+
+
 2022.10.11[v0.0.1] Initial package version
 
 1. Develop Debye and BvK model
