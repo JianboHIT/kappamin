@@ -72,5 +72,7 @@ See [GitHub Issue page](../../issues).
 
 ## Change log
 
+(More details see [CHANGELOG](CHANGELOG))
+
 - 2022.10.06 v0.0.1 Initial package version
 
