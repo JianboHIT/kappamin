@@ -59,6 +59,9 @@ def _core_bvk(x):
     return v
 
 def _quad_t(func, Tr):
+    '''
+    Calculate integral in reduced k-space with an additional parameter
+    '''
     def itg(Trx):
         return quad(func, 0, 1, args=(Trx,))[0]
     itg_v = np.vectorize(itg)
@@ -66,7 +69,8 @@ def _quad_t(func, Tr):
 
 def Debye(vT, vL, Natom, Vcell, T):
     '''
-    Calculate Debye-Cahill minimum limit to thermal conductivity
+    Calculate Debye-Cahill minimum limit to thermal conductivity.
+    All  parameters in common units.
     '''
     
     # define constants for matching common units
@@ -129,7 +133,8 @@ def Debye(vT, vL, Natom, Vcell, T):
 
 def BvK(vT, vL, Natom, Vcell, T):
     '''
-    Calculate BvK-Cahill minimum limit to thermal conductivity
+    Calculate BvK-Cahill minimum limit to thermal conductivity.
+    All  parameters in common units.
     '''
     
     # define constants for matching common units
@@ -192,7 +197,8 @@ def BvK(vT, vL, Natom, Vcell, T):
 
 def Pei(vT, vL, Natom, Vcell, T):
     '''
-    Calculate Pei-Cahill minimum limit to thermal conductivity
+    Calculate Pei-Cahill minimum limit to thermal conductivity.
+    All  parameters in common units.
     '''
     
     vs = (3/(2/vT**3+1/vL**3))**(1/3)
@@ -249,6 +255,9 @@ def Pei(vT, vL, Natom, Vcell, T):
     return out
 
 def fileparser(filename, ktypes=None):
+    '''
+    Parser the configuration file and return a ConfigParser() object.
+    '''
     # read config file
     config = configparser.ConfigParser(inline_comment_prefixes=('#',))
     config.SECTCRE = re.compile(r"\[ *(?P<header>[^]]+?) *\]")  # ignore blanks in section name
@@ -266,6 +275,11 @@ def fileparser(filename, ktypes=None):
         return config2
     
 def _section_parser(config, modeltype):
+    '''
+    Parser parameters from a specific model-section.
+    '''
+    
+    # TODO: config = fileparser(config) if is string else config
     # keys = ['vT', 'vL', 'Natom', 'Vcell', 'T']
     
     paras = dict()
@@ -293,6 +307,10 @@ def _section_parser(config, modeltype):
     return isSingle, paras
 
 def _sequence_parser(value, func=float, defaultstep=1):
+    '''
+    Parser a sequence or slice from a string.
+    '''
+    
     if ':' in value:
         # sequence with step
         values = value.strip().split(':')
@@ -318,6 +336,13 @@ def _sequence_parser(value, func=float, defaultstep=1):
 def _savedat_to_file(filename, datas, keys=None, 
                      fmt='%.6f', header='auto', 
                      isSingle=None):
+    '''
+    Save output of model calculation to a file.
+    Default header(='auto') is Properties & Units, while is ignored if it is None. 
+    '''
+    
+    # TODO: fix isSingle check bug if datas['Kappa_min'] not a ndarray
+    
     # check default
     if keys is None:
         keys = UNITS.keys()
@@ -351,6 +376,12 @@ def _savedat_to_file(filename, datas, keys=None,
         f.write(rst)
 
 def execute(filename=None, toFile=True, hasReturn=False):
+    '''
+    Read configuration file and do calculation.
+    '''
+    
+    # TODO: allow muilt-output result when muilt-model
+    
     # access filename of config
     ktypes = ['Debye', 'BvK', 'Pei']
     if filename is None:
