@@ -70,7 +70,7 @@ and *double-click* it to run.**
 
 ## Feedback and report bugs
 
-See [GitHub Issue page](../../issues).
+See [GitHub Issue page](https://github.com/JianboHIT/kappamin/issues).
 
 ## Change log
 
