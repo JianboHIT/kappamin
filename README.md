@@ -32,14 +32,14 @@ In order to install the module, you need to install the dependencies first:
 Download the package from GitHub website or using `git`,
 
 ```
-$ git clone https://github.com/JianboHIT/kappamin.git
+git clone https://github.com/JianboHIT/kappamin.git
 ```
 
 then run `setup.py` to install.
 
 ```
-$ cd kappamin
-$ python3 setup.py install
+cd kappamin
+python3 setup.py install
 ```
 
 Python module `kappamin` will be installed if no error. 
@@ -49,7 +49,7 @@ and [Example_BvK.txt](Example_Debye.txt)
 in the source package).
 
 ```
-$ python -m kappamin [KAPPAMIN.txt]
+python -m kappamin [KAPPAMIN.txt]
 ```
 
 Here `KAPPAMIN.txt` indicates the filename of configuration file. 
@@ -61,7 +61,7 @@ Alternately, a more convenient way to implement calculation is by an executable 
 On Linux or Windows Terminal:
 
 ```
-$ python ExceuteScript.py
+python ExceuteScript.py
 ```
 
 **On Windows, if it has been configured that the default program to open .py file is python3,
