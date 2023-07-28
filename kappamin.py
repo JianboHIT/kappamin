@@ -114,11 +114,9 @@ def Debye(vT, vL, Natom, Vcell, T):
         CrL = _quad_t(f_cv, TaL/T)
         KMrT = _quad_t(f_km, TaT/T)
         KMrL = _quad_t(f_km, TaL/T)
-        TMrT = KMrT/CrT
-        TMrL = KMrL/CrL
         out['T'] = T
         out['Cv'] = factor_cv * (2*CrT+CrL)/3
-        out['Kappa_min'] = (2*factor_kmT*TMrT+factor_kmL*TMrL)/3
+        out['Kappa_min'] = (2*factor_kmT*KMrT+factor_kmL*KMrL)/3
         out['Omega_a_T'] = WcT*np.ones_like(T)
         out['Omega_a_L'] = WcL*np.ones_like(T)
         out['T_a_T'] = TaT*np.ones_like(T)
@@ -178,11 +176,9 @@ def BvK(vT, vL, Natom, Vcell, T):
         CrL = _quad_t(f_cv, TaL/T)
         KMrT = _quad_t(f_km, TaT/T)
         KMrL = _quad_t(f_km, TaL/T)
-        TMrT = KMrT/CrT
-        TMrL = KMrL/CrL
         out['T'] = T
         out['Cv'] = factor_cv * (2*CrT+CrL)/3
-        out['Kappa_min'] = (2*factor_kmT*TMrT+factor_kmL*TMrL)/3
+        out['Kappa_min'] = (2*factor_kmT*KMrT+factor_kmL*KMrL)/3
         out['Omega_a_T'] = WcT*np.ones_like(T)
         out['Omega_a_L'] = WcL*np.ones_like(T)
         out['T_a_T'] = TaT*np.ones_like(T)
@@ -425,4 +421,4 @@ if __name__ == '__main__':
     else: 
         filename = None
     execute(filename)
-    
+
