@@ -23,26 +23,18 @@ A python3 code for calculations of the minimum limit to thermal conductivity
 
 ## Getting Started
 
-In order to install the module, you need to install the dependencies first:
-
-- python3
-- numpy
-- scipy
-
-Download the package from GitHub website or using `git`,
+The first step is to install `kappamin`. If you have internet access,
+the most straightforward way to do this is via `pip`:
 
 ```
-git clone https://github.com/JianboHIT/kappamin.git
+pip install kappamin
 ```
 
-then run `setup.py` to install.
+Please be patient as the installation completes.
+For those without internet access,
+instructions for source code installation can be found under the
+[Offline Installation](#offline-installation) section.
 
-```
-cd kappamin
-python3 setup.py install
-```
-
-Python module `kappamin` will be installed if no error. 
 In order to invoke `kappamin` module, you need to prepare a configuration file 
 (see [Example_Debye.txt](Example_Debye.txt)
 and [Example_BvK.txt](Example_Debye.txt)
@@ -77,6 +69,36 @@ ones can see [Example_AsModule.py](Example_AsModule.py).
 ## Feedback and report bugs
 
 See [GitHub Issue page](https://github.com/JianboHIT/kappamin/issues).
+
+## Offline Installation
+
+To install `kappamin` in an offline environment,
+please ensure that `numpy` and `scipy` are already successfully installed on your system.
+Then, download the source code package of `kappamin` from GitHub
+([https://github.com/JianboHIT/kappamin](https://github.com/JianboHIT/kappamin)).
+This package is typically named `kappamin-master.zip`.
+Unzip the package and enter the directory by executing:
+
+```bash
+unzip kappamin-master.zip; cd kappamin-master
+```
+
+Then, install the package by running:
+
+```bash
+python3 setup.py install
+```
+
+Please wait for the installation process to complete.
+During this proces, you may encounter some warnings about this method of installation being deprecated.
+Such warnings arise because this approach deviates from Python's official advice 
+and may not represent the most streamlined method currently known.
+However, as long as `numpy` and `scipy` have been correctly installed beforehand,
+these warnings can generally be disregarded. To date,
+I have not identified an alternative strategy that matches this method's simplicity.
+I sincerely welcome your recommendations for making the installation process smoother or more efficient.
+I'm open to and thankful for any insights or suggestions you might have,
+aiming to enhance the installation experience for all users.
 
 ## Change log
 
