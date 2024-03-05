@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='kappamin',
-    version='0.2.0',
+    version='0.2.1',
     url='https://github.com/JianboHIT/kappamin',
     author='Jianbo ZHU',
     description='A python3 code for calculations of the minimum limit to thermal conductivity',
