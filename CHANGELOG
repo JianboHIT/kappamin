@@ -1,3 +1,8 @@
+2024.03.05[v0.2.1] Support pip installation
+
+1. Publish package to PyPI.
+2. Updata isntallation guide in READMD.md
+
 2023.08.27[v0.2.0] Add Example_AsModule.py file
 
 1. Give Example_AsModule.py
