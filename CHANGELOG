@@ -1,3 +1,8 @@
+2024.06.11[v0.3.0] Support pre-computed phonon dispersion
+
+1. Support pre-computed phonon dispersion
+2. Improve README.md
+
 2024.03.05[v0.2.1] Support pip installation
 
 1. Publish package to PyPI.
