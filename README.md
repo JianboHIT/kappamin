@@ -164,6 +164,7 @@ aiming to enhance the installation experience for all users.
 
 (More details see [CHANGELOG](CHANGELOG))
 
+- 2024.06.11 v0.3.0 Support pre-computed phonon dispersion
 - 2024.03.05 v0.2.1 Support pip installation
 - 2023.08.27 v0.2.0 Add Example_AsModule.py file
 - 2022.10.16 v0.1.1 Fix crucial bug in Pei model
