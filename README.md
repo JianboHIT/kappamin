@@ -9,6 +9,8 @@ A python3 code for calculations of the minimum limit to thermal conductivity
   - Debye model[^2]
   - BvK (Born–von Karman) model[^3]
   - Pei model[^4]
+  - Pre-computed phonon dispersion (see
+    [Full Phonon Dispersion File Format](#full-phonon-dispersion-file-format))
 - Temperature-dependence
   - Finite temperature
   - Ideal infinite temperature
@@ -65,6 +67,52 @@ and access the full feature set of `kappamin` more directly.
 Those wanting to use the interpolation capabilities of `kappamin` in their own code, 
 or using it as part of an automated workflow, 
 ones can see [Example_AsModule.py](Example_AsModule.py).
+
+## Full Phonon Dispersion File Format
+
+To calculate the minimum thermal conductivity based on full phonon dispersion,
+we need data on frequencies, group velocities, weights,
+and optionally phonon branch indices.
+
+Our program supports directly parsing this data from the `mesh.yaml` file
+calculated by the phonopy program.
+The corresponding configuration file should be prepared like this
+(the model type needs to be specified as `Full`):
+
+```ini
+[Full]
+modedata = mesh.yaml
+T = 300:200:900
+```
+
+As an alternative, our program also supports a file with multiple columns,
+sequentially listing frequencies in THz, the three components of group velocity in km/s,
+and the corresponding weights, with at least 5 columns of data.
+Optionally, there can be a column for phonon branch indices (6th column).
+The phonon branch index is an integer in the range of 1 to 3*Natom,
+where indices 1 and 2 are considered transverse acoustic branches (TA1 & TA2),
+and 3 is considered the longitudinal acoustic branch (LA1),
+with the rest considered optical branches.
+If the phonon branch indices are provided, we will estimate the transverse sound speed,
+longitudinal sound speed, and the Debye frequency of the LA & TA branches based on the formula:
+
+$$ \theta = \sqrt{\frac{5}{3} \frac{\int \omega^2 g(\omega)d\omega}{\int g(\omega)d\omega}} $$
+
+In this case, the configuration file should be prepared as follows
+(`Natom` and `Vcell` are required):
+
+```ini
+[Full]
+modedata = mode.dat
+Natom = 3
+Vcell = 61.1363
+T = 300:200:900
+```
+
+Our program determines how to parse the data based on the file extension specified by `modedata`.
+Files with the `.yaml` extension are parsed as outputs from the phonopy program,
+while `.txt` and `.dat` files are parsed as files containing multi-column phonon mode data.
+
 
 ## Feedback and report bugs
 
