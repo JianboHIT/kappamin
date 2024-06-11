@@ -250,6 +250,80 @@ def Pei(vT, vL, Natom, Vcell, T):
     out['MFP_min'] = out['Tau_min'] * out['vs'] * 10 # [ps*km/s] = [ps*nm/ps] = [nm] to [A]
     return out
 
+def Full(modes, Natom, Vcell, T):
+    '''
+    Calculate Cahill minimum limit to thermal conductivity based on full phonon dispersion.
+    All  parameters in common units.
+
+    modes: [[freq, vx, vy, vz, weight, index], ...]
+    '''
+
+    # define constants for matching common units
+    kB = 13.80649
+    hb = 105.457182
+
+    modes = np.array(modes)
+    fq = modes[:, 0]    # THz
+    v2 = np.mean(np.power(modes[:, 1:4], 2), axis=1)    # [km/s]^2
+    tc = np.divide(1, 2*fq, out=np.ones_like(fq), where=(fq > 0))   # ps
+    wt = modes[:, 4]
+    index = modes[:, 5] if modes.shape[1] > 5 else 0
+    acoustic = (index < 3.5)
+    optical = (index > 3.5)
+
+    print(f'Natom: {Natom:g}')
+    print(f'Vcell: {Vcell:.4g} Ang.^3')
+
+    if np.any(index < 0.5):
+        acoustic = 1
+        optical = WcT = WcL = TaT = TaL = vs = 0
+    else:
+        vT_1 = np.max(np.sqrt(3*v2)*(index<1.5))
+        vT_2 = np.max(np.sqrt(3*v2)*(index<2.5)*(index>1.5))
+        vL = np.max(np.sqrt(3*v2)*(index<3.5)*(index>2.5))
+        vs = (3/(1/vT_1**3+1/vT_2**3+1/vL**3))**(1/3)
+
+        WcT = 2*np.pi * np.sqrt(5/3 * np.sum(wt*fq*fq*(index<2.5))/2)
+        WcL = 2*np.pi * np.sqrt(5/3 * np.sum(wt*fq*fq*(index<3.5)*(index>2.5)))
+        TaT = hb/kB * WcT   # [K]
+        TaL = hb/kB * WcL
+        print(f'vT_1:  {vT_1:.4g} km/s')
+        print(f'vT_2:  {vT_2:.4g} km/s')
+        print(f'vL:    {vL:.4g} km/s')
+
+    out = dict()
+    if isinstance(T, float) and (T == float('inf')):
+        out['T'] = T
+        out['Cv'] = 3.0
+        out['Kappa_min_A'] = kB * np.sum(wt*v2*tc*acoustic) / Vcell
+        out['Kappa_min_O'] = kB * np.sum(wt*v2*tc*optical) / Vcell
+        out['Tau_min'] = np.sum(wt*tc) / (3*Natom)
+        out['MFP_min'] = 10 * np.sum(wt*tc*np.sqrt(v2)) / (3*Natom)# [ps.km/s] -> A
+    else:
+        shp = np.array(T).shape
+        Tf = np.reshape(T, (-1, 1))
+        cv_k = _kernel(hb * 2 * np.pi * fq / (kB * Tf))
+        Cv = np.sum(wt*cv_k, axis=1)/Natom
+        kp_A = kB * np.sum(wt*cv_k*v2*tc*acoustic, axis=-1) / Vcell
+        kp_O = kB * np.sum(wt*cv_k*v2*tc*optical, axis=-1) / Vcell
+        tc_ave = np.sum(wt*tc*cv_k, axis=1) / (Cv*Natom)
+        mfp_ave = 10 * np.sum(wt*tc*np.sqrt(v2)*cv_k, axis=1) / (Cv*Natom)
+        out['T'] = np.array(T)
+        out['Cv'] = np.reshape(Cv, shp)
+        out['Kappa_min_A'] = np.reshape(kp_A, shp)
+        out['Kappa_min_O'] = np.reshape(kp_O, shp)
+        out['Tau_min'] = np.reshape(tc_ave, shp)
+        out['MFP_min'] = np.reshape(mfp_ave, shp)
+
+    out['Kappa_min'] = out['Kappa_min_A'] + out['Kappa_min_O']
+    shp = np.ones_like(out['Kappa_min'])
+    out['Omega_a_T'] = WcT * shp
+    out['Omega_a_L'] = WcL * shp
+    out['T_a_T'] = TaT * shp
+    out['T_a_L'] = TaL * shp
+    out['vs'] = vs * shp
+    return out
+
 def fileparser(filename, ktypes=None):
     '''
     Parser the configuration file and return a ConfigParser() object.
@@ -280,9 +354,23 @@ def _section_parser(config, modeltype):
     
     paras = dict()
     
-    # parser float
-    for key in ['vT', 'vL', 'Natom', 'Vcell']:
-        paras[key] = config.getfloat(modeltype, key)
+    if modeltype.lower() == 'full':
+        filename = config.get(modeltype, 'modedata')
+        if filename.endswith('yaml'):
+            paras = _read_mesh_yaml(filename)
+            np.savetxt('mode.dat', paras['modes'], fmt='%.6g',
+                header=f'Parse from {filename} by kappamin code\n'
+                       'freq, vx, vy, vz, weight, index')
+        elif filename.endswith('txt') or filename.endswith('dat'):
+            paras['modes'] = np.loadtxt(filename, ndmin=2)
+            paras['Natom'] = config.getfloat(modeltype, 'Natom')
+            paras['Vcell'] = config.getfloat(modeltype, 'Vcell')
+        else:
+            raise NotImplementedError('Support file formats: .yaml|.txt|.dat')
+    else:
+        # parser float
+        for key in ['vT', 'vL', 'Natom', 'Vcell']:
+            paras[key] = config.getfloat(modeltype, key)
     
     # parser temperature    
     valueT = config[modeltype]['T']
@@ -371,6 +459,54 @@ def _savedat_to_file(filename, datas, keys=None,
     with open(filename, 'w') as f:
         f.write(rst)
 
+def _read_mesh_yaml(filename):
+    df = dict()
+    dsp = re.compile(r'[\d.]+')
+    with open(filename, 'r') as f:
+        # nqpoint
+        for line in f:
+            if line.startswith('mesh'):
+                break
+        nqpoint = 1
+        for dim_ in dsp.findall(line):
+            nqpoint *= int(dim_)
+
+        # natom
+        for line in f:
+            if line.startswith('natom'):
+                break
+        df['Natom'] = int(dsp.findall(line)[0])
+
+        # lattice  ->  Vcell
+        for line in f:
+            if line.startswith('lattice'):
+                break
+        lattice = []
+        for _ in range(3):
+            lattice.append([float(i) for i in dsp.findall(f.readline())])
+        df['Vcell'] = np.linalg.det(lattice)
+
+        # modes
+        for line in f:
+            if line.startswith('phonon'):
+                break
+        modes = []      # freq, vx, vy, vz, weight, index
+        for line in f:
+            if 'weight' in line:
+                weight = float(dsp.findall(line)[0]) / nqpoint
+                index = 1       # 1-start
+            elif 'frequency' in line:
+                mode = [float(dsp.findall(line)[0]),]
+            elif 'group_velocity' in line:
+                # A.THz --> km/s
+                mode.extend(float(i)/10 for i in dsp.findall(line))
+                mode.append(weight)
+                mode.append(index)
+                modes.append(mode)
+                index += 1
+        df['modes'] = modes
+    return df
+
 def execute(filename=None, toFile=True, hasReturn=False):
     '''
     Read configuration file and do calculation.
@@ -379,7 +515,7 @@ def execute(filename=None, toFile=True, hasReturn=False):
     # TODO: allow muilt-output result when muilt-model
     
     # access filename of config
-    ktypes = ['Debye', 'BvK', 'Pei']
+    ktypes = ['Debye', 'BvK', 'Pei', 'Full']
     if filename is None:
         # auto-detect filename
         prefix = 'KAPPAMIN'
@@ -405,6 +541,10 @@ def execute(filename=None, toFile=True, hasReturn=False):
         fileout = 'Kappamin_Pei.dat'
         isSingle, paras = _section_parser(config, 'Pei')
         out = Pei(**paras)
+    elif 'Full' in config.sections():
+        fileout = 'Kappamin_Full.dat'
+        isSingle, paras = _section_parser(config, 'Full')
+        out = Full(**paras)
     else:
         raise ValueError('Unknown method.(Valid: %s)', ', '.join(ktypes))
     
