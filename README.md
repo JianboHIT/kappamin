@@ -49,6 +49,16 @@ python -m kappamin [KAPPAMIN.txt]
 Here `KAPPAMIN.txt` indicates the filename of configuration file. 
 It is worth mentioning that the filename is optional. 
 If the filename is not given, the program will read the file named as `KAPPAMIN.txt` if it existed.
+An example of configuration file as follows:
+
+```ini
+[Debye]          # type of phonon dispersion
+vt = 4.37        # transverse sound velocity in km/s
+vl = 7.36        # longitudinal sound velocity in km/s
+Natom = 2        # the number of atoms in a primitive cell
+Vcell = 160.1    # the volume of a primitive cell in cubic angstrom [A^3]
+T = 300          # temperature(s)
+```
 
 Alternately, a more convenient way to implement calculation is by an executable script
 (see [ExceuteScript.py](ExecuteScript.py)), then run it by python3. 
